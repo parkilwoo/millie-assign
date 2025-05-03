@@ -1,0 +1,49 @@
+services:
+  mysql:
+    image: mysql
+    restart: always
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - millie-network
+    ports:
+      - 3306:3306
+
+  app:
+    build:
+      context: .
+      dockerfile: milie/Dockerfile
+    container_name: milie-app
+    restart: on-failure
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DATBASE_ORM: ${DATBASE_ORM}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    networks:
+      - millie-network
+
+volumes:
+  db_data:
+
+networks:
+  millie-network:
